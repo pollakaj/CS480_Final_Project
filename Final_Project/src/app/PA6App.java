@@ -2,6 +2,9 @@ package app;
 
 import geography.*;
 import gui.*;
+import partition.GridPartition;
+import partition.GridPartitionPanel;
+
 import java.io.*;
 import java.util.*;
 import javax.swing.*;
@@ -42,8 +45,20 @@ public class PA6App implements Runnable
       Map<String, Street> streets = new HashMap<String, Street>();
       document = sReader.read(streets);
       System.out.println("Read the .str file");
+      
+      double cellSize = 100.0;
+      GridPartition gridPart = new GridPartition(cellSize);
+      for (StreetSegment segment : document)
+      {
+        gridPart.addSegment(segment);
+      }
 
       panel = new DynamicCartographyPanel<StreetSegment>(document, new StreetSegmentCartographer(), proj);
+      
+      panel.setGridPartition(gridPart);
+      GridPartitionPanel gridPanel = new GridPartitionPanel(gridPart);
+      panel.add(gridPanel);
+      
       frame = new JFrame("Map");
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       frame.setSize(600, 600);
