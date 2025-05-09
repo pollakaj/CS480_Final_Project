@@ -54,7 +54,7 @@ public class PathFindingWorker extends SwingWorker<Map<String, StreetSegment>, S
   @Override
   public Map<String, StreetSegment> doInBackground()
   {
-    return alg.findPath(origin,  destination, net);
+    return alg.findPath(origin, destination, net);
   }
   
   /**
