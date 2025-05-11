@@ -4,6 +4,7 @@ import dataprocessing.*;
 import feature.Street;
 import feature.StreetSegmentObserver;
 import feature.StreetSegmentSubject;
+import gps.GPGGASentence;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -69,9 +70,21 @@ public class GeocodeDialog extends JDialog implements ActionListener,
     {
       public void actionPerformed(final ActionEvent evt)
       {
-        geocoder.reset();
-        DefaultListModel<String> listModel = (DefaultListModel<String>)resultsArea.getModel();
-        listModel.clear();
+        GPGGASentence gps = geocoder.getGPS();
+        if (gps != null)
+        {
+          double lat = gps.getLatitude();
+          double lon = gps.getLongitude();
+          String location = lat + "," + lon;
+          DefaultListModel<String> model = (DefaultListModel<String>)resultsArea.getModel();
+          model.clear();
+          model.addElement(location);
+        }
+        else
+        {
+          JOptionPane.showMessageDialog(GeocodeDialog.this, 
+              "No GPS data available!", "Error", JOptionPane.ERROR_MESSAGE);
+        }
       }
     });
 
