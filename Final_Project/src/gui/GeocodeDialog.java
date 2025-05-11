@@ -38,7 +38,7 @@ public class GeocodeDialog extends JDialog implements ActionListener,
   private List<StreetSegmentObserver> observers;
   
   private Geocoder geocoder;
-  private JButton geocodeButton;
+  private JButton geocodeButton, currLocatonBut;
   private JComboBox<String> categoryField, prefixField, suffixField;
   private JList<String> resultsArea;
   private JTextField nameField, numberField;
@@ -63,6 +63,18 @@ public class GeocodeDialog extends JDialog implements ActionListener,
     suffixField   = createJComboBox(null);
     
     geocodeButton = new JButton(GEOCODE);
+    currLocatonBut = new JButton("Current Location");
+
+    currLocatonBut.addActionListener(new ActionListener()
+    {
+      public void actionPerformed(final ActionEvent evt)
+      {
+        geocoder.reset();
+        DefaultListModel<String> listModel = (DefaultListModel<String>)resultsArea.getModel();
+        listModel.clear();
+      }
+    });
+
     geocodeButton.addActionListener(this);
     
     resultsArea = new JList<String>(new DefaultListModel<String>());
@@ -223,6 +235,7 @@ public class GeocodeDialog extends JDialog implements ActionListener,
     toolBar.setFloatable(false);
     toolBar.addSeparator();
     toolBar.add(geocodeButton);
+    toolBar.add(currLocatonBut);
     contentPane.add(toolBar, BorderLayout.SOUTH);
 
     Row entryPanel = new Row();
