@@ -2,6 +2,7 @@ package graph;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.*;
 
@@ -54,7 +55,10 @@ public class PathFindingWorker extends SwingWorker<Map<String, StreetSegment>, S
   @Override
   public Map<String, StreetSegment> doInBackground()
   {
-    return alg.findPath(origin, destination, net);
+    Map<String, StreetSegment> path = alg.findPath(origin, destination, net);
+    List<StreetSegment> route = new ArrayList<>(path.values());
+    ((DynamicCartographyPanel<StreetSegment>) panel).setCurrentRoute(route);
+    return path;
   }
   
   /**

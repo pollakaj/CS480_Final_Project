@@ -128,30 +128,32 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
       menu.add(item);
       frame.setContentPane(panel);
       
-//      // Find the right serial port
-//      SerialPort[] ports = SerialPort.getCommPorts();
-//      String gpsPath = null;
-//      for (SerialPort port:ports)
-//      {
-//        String description = port.getPortDescription();
-//        String path = port.getSystemPortPath();
-//        if (description.indexOf("GPS") >= 0) gpsPath = path;
-//      }
-//    
-//      // Setup the serial port
-//      SerialPort gps = SerialPort.getCommPort(gpsPath); 
-//      gps.openPort();
-//      gps.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
-//      InputStream is = gps.getInputStream();
+      // Find the right serial port
+      SerialPort[] ports = SerialPort.getCommPorts();
+      String gpsPath = null;
+      for (SerialPort port:ports)
+      {
+        System.out.println("Description: " + port.getPortDescription());
+        System.out.println("System Port Path: " + port.getSystemPortPath());
+        String description = port.getPortDescription();
+        String path = port.getSystemPortPath();
+        if (description.indexOf("GPS") >= 0) gpsPath = path;
+      }
+    
+      // Setup the serial port
+      SerialPort gps = SerialPort.getCommPort(gpsPath); 
+      gps.openPort();
+      gps.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
+      InputStream is = gps.getInputStream();
       
-      // Setup the GPSReaderTask
+    // Setup the GPSReaderTask
 //      GPSReaderTask gpsReader = new GPSReaderTask(is, "GPGGA");
 //      gpsReader.addGPSObserver(this);
 //      frame.setVisible(true);
 //      gpsReader.execute();
       
-      GPSSimulator gps = new GPSSimulator("rockingham.gps");
-      InputStream is = gps.getInputStream();
+//      GPSSimulator gps = new GPSSimulator("rockingham.gps");
+//      InputStream is = gps.getInputStream();
 
       
       GPSReaderTask gpsReader = new GPSReaderTask(is, "GPGGA");
@@ -159,17 +161,18 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
       frame.setVisible(true);
       gpsReader.execute();
 
-      panel.addPropertyChangeListener("recalculateRoute", evt -> 
-      {
-        StreetSegment newOrigin = (StreetSegment) evt.getNewValue();
-        startRouteRecalculation(newOrigin);
-      });
+//      panel.addPropertyChangeListener("recalculateRoute", evt -> 
+//      {
+//        StreetSegment newOrigin = (StreetSegment) evt.getNewValue();
+//        startRouteRecalculation(newOrigin);
+//      });
       frame.setVisible(true);
       Geocoder geocoder = new Geocoder(geographicShapes, document, streets);
-      dialog = new GeocodeDialog(frame, geocoder);
+      dialog = new GeocodeDialog(frame, geocoder, panel);
       dialog.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       dialog.addStreetSegmentObserver(this);
-      dialog.setLocation((int)frame.getBounds().getMaxX(), (int)frame.getBounds().getY());
+      dialog.setLocation((int)frame.getBounds().getMaxX(), 
+          (int)frame.getBounds().getY());
     }
     catch (IOException ioe)
     {
@@ -179,16 +182,16 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
     }
   }
   
-  private void startRouteRecalculation(final StreetSegment newOrigin)
-  {
-    this.originSegment = newOrigin;
-    if (originSegment != null && destinationSegment != null)
-    {
-      System.out.println("Recalculating route from " + originSegment + "to " + destinationSegment);
-      actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, 
-          "Calculate Route"));
-    }
-  }
+//  private void startRouteRecalculation(final StreetSegment newOrigin)
+//  {
+//    this.originSegment = newOrigin;
+//    if (originSegment != null && destinationSegment != null)
+//    {
+//      System.out.println("Recalculating route from " + originSegment + "to " + destinationSegment);
+//      actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, 
+//          CALCULATE));
+//    }
+//  }
 
   @Override
   public void propertyChange(final PropertyChangeEvent evt)
@@ -204,6 +207,13 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
         try
         {
           Map<String, StreetSegment> path = task.get();
+//          if (originSegment != null && !path.containsValue(originSegment))
+//          {
+//            Map<String, StreetSegment> newPath = new HashMap<>();
+//            newPath.put(originSegment.getID(), originSegment);
+//            newPath.putAll(path);
+//            path = newPath;
+//          }
           document.setHighlighted(path);
           panel.repaint();
           task = null;
@@ -259,7 +269,8 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
     {
       if (!dialog.isVisible())
       {
-        dialog.setLocation((int)frame.getBounds().getMaxX(), (int)frame.getBounds().getY());
+        dialog.setLocation((int)frame.getBounds().getMaxX(), 
+            (int)frame.getBounds().getY());
         dialog.setVisible(true);
       }
     }

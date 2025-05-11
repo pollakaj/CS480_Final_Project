@@ -10,6 +10,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 import feature.StreetSegment;
 import geography.GeographicShape;
 import geography.MapProjection;
@@ -33,6 +35,7 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
    * Default Serial version ID.
    */
   private static final long serialVersionUID = 1L;
+  private static final double DISTANCE_THRESHOLD = 0.02;
   private GPGGASentence gpgga;
   private MapProjection proj;
   private GridPartition gridPartition;
@@ -147,13 +150,29 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
     
     matchedSegment = bestSeg;
     matchedPoint = bestPoint;
-//    if (currRoute != null && matchedSegment != null && !currRoute.contains(matchedSegment))
-//    {
-//      System.out.println("Driver gone off-route! Recalculating...");
-//      firePropertyChange("recalculateRoute", null, matchedSegment);
-//    }
     
+    if (currRoute != null && !onRoute(matchedPoint, currRoute))
+    {
+      System.out.println("You are off route");
+      JOptionPane.showMessageDialog(this, "You are off route!", 
+          "Off Route Alert", JOptionPane.WARNING_MESSAGE);
+    }
+
     repaint();
+  }
+  
+  private boolean onRoute(final Point2D matched, 
+      final List<StreetSegment> route)
+  {
+    for (StreetSegment segment : route)
+    {
+      GeographicShape shape = segment.getGeographicShape();
+      Point2D closest = getClosestPoint(matchedPoint, shape);
+      double dist = matchedPoint.distance(closest);
+      if (dist <= DISTANCE_THRESHOLD) return true;
+    }
+    
+    return false;
   }
   
   private Point2D getClosestPoint(final Point2D target, 
@@ -213,6 +232,20 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
   public void setCurrentRoute(final List<StreetSegment> route)
   {
     this.currRoute = route;
+    if (matchedSegment != null && !this.currRoute.contains(matchedSegment))
+    {
+      this.currRoute.add(0, matchedSegment);
+    }
+    System.out.println("Current route set. Number of segments: " + route.size());
   }
-
+  
+  public StreetSegment getMatchedSegment()
+  {
+    return matchedSegment;
+  }
+  
+  public Point2D getMatchedPoint()
+  {
+    return matchedPoint;
+  }
 }

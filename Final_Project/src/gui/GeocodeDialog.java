@@ -2,6 +2,7 @@ package gui;
 
 import dataprocessing.*;
 import feature.Street;
+import feature.StreetSegment;
 import feature.StreetSegmentObserver;
 import feature.StreetSegmentSubject;
 import gps.GPGGASentence;
@@ -37,9 +38,10 @@ public class GeocodeDialog extends JDialog implements ActionListener,
   // Attributes
   private List<String> ids;
   private List<StreetSegmentObserver> observers;
-  
+  private GPGGASentence currSentence;
+  private DynamicCartographyPanel<?> panel;
   private Geocoder geocoder;
-  private JButton geocodeButton, currLocatonBut;
+  private JButton geocodeButton, currLocationButton;
   private JComboBox<String> categoryField, prefixField, suffixField;
   private JList<String> resultsArea;
   private JTextField nameField, numberField;
@@ -50,10 +52,12 @@ public class GeocodeDialog extends JDialog implements ActionListener,
    * @param owner JFrame owner
    * @param geocoder Geocoder object
    */
-  public GeocodeDialog(final JFrame owner, final Geocoder geocoder)
+  public GeocodeDialog(final JFrame owner, final Geocoder geocoder, 
+      final DynamicCartographyPanel<?> panel)
   {
     super(owner, "Geocoder", false);
     this.geocoder = geocoder;
+    this.panel = panel;
     
     observers = new ArrayList<StreetSegmentObserver>();
     
@@ -64,27 +68,20 @@ public class GeocodeDialog extends JDialog implements ActionListener,
     suffixField   = createJComboBox(null);
     
     geocodeButton = new JButton(GEOCODE);
-    currLocatonBut = new JButton("Current Location");
-
-    currLocatonBut.addActionListener(new ActionListener()
-    {
-      public void actionPerformed(final ActionEvent evt)
+    currLocationButton = new JButton("Current Location");
+    
+    currLocationButton.addActionListener(evt -> {
+      StreetSegment currSegment = panel.getMatchedSegment();
+      if (currSegment != null)
       {
-        GPGGASentence gps = geocoder.getGPS();
-        if (gps != null)
-        {
-          double lat = gps.getLatitude();
-          double lon = gps.getLongitude();
-          String location = lat + "," + lon;
-          DefaultListModel<String> model = (DefaultListModel<String>)resultsArea.getModel();
-          model.clear();
-          model.addElement(location);
-        }
-        else
-        {
-          JOptionPane.showMessageDialog(GeocodeDialog.this, 
-              "No GPS data available!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        List<String> currIDs = new ArrayList<>();
+        currIDs.add(currSegment.getID());
+        notifyStreetSegmentObservers(currIDs);
+      }
+      else
+      {
+        JOptionPane.showMessageDialog(this, "No matched GPS Segment", "Error", 
+            JOptionPane.ERROR_MESSAGE);
       }
     });
 
@@ -248,7 +245,7 @@ public class GeocodeDialog extends JDialog implements ActionListener,
     toolBar.setFloatable(false);
     toolBar.addSeparator();
     toolBar.add(geocodeButton);
-    toolBar.add(currLocatonBut);
+    toolBar.add(currLocationButton);
     contentPane.add(toolBar, BorderLayout.SOUTH);
 
     Row entryPanel = new Row();
@@ -326,5 +323,10 @@ public class GeocodeDialog extends JDialog implements ActionListener,
       }
       notifyStreetSegmentObservers(selectedIDs);
     }
+  }
+  
+  public void setCurrentGPGGASentence(GPGGASentence sentence)
+  {
+    this.currSentence = sentence;
   }
 }
