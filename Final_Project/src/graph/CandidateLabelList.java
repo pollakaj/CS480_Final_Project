@@ -1,6 +1,6 @@
 package graph;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import feature.StreetSegment;
@@ -30,12 +30,7 @@ public class CandidateLabelList extends AbstractLabelManager implements Candidat
   {
     super(networkSize);
     this.policy = policy;
-    this.candidates = new ArrayList<>();
-    
-    for (int i = 0; i < networkSize; i++) 
-    {
-      this.labels[i] = new Label(i);
-    }
+    this.candidates = new LinkedList<Integer>();
   }
 
   @Override
@@ -43,11 +38,11 @@ public class CandidateLabelList extends AbstractLabelManager implements Candidat
   {
     int headID = segment.getHead();
     int tailID = segment.getTail();
-    Label tailLabel = getLabel(tailID);
-    Label headLabel = getLabel(headID);
-
-    double possibleValue = tailLabel.getValue() + segment.getLength();
-    headLabel.adjustValue(possibleValue, segment);
+    Label label = labels[headID];
+    
+    double currVal = labels[tailID].getValue();
+    double possibleValue = currVal + segment.getLength();
+    label.adjustValue(possibleValue, segment);
     
     if (!candidates.contains(headID)) candidates.add(headID);
   }
@@ -55,22 +50,13 @@ public class CandidateLabelList extends AbstractLabelManager implements Candidat
   @Override
   public Label getCandidateLabel()
   {
-    if (candidates.isEmpty()) return null;
+    Label result = null;
+    if (candidates.size() != 0)
+    {
+      if (policy.equals(NEWEST)) result = labels[candidates.removeLast()];
+      else result = labels[candidates.removeFirst()];
+    }
 
-    int id;
-    if (policy.equals(NEWEST)) id = candidates.remove(candidates.size() - 1);
-    else id = candidates.remove(0);
-
-    return getLabel(id);
-  }
-  
-  /**
-   * Helper method for adding a candidate to the candidates list.
-   *
-   * @param id int ID for the candidate to add.
-   */
-  public void addCandidate(final int id) 
-  {
-    if (!candidates.contains(id)) candidates.add(id);
+    return result;
   }
 }

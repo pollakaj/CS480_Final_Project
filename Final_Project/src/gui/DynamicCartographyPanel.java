@@ -36,8 +36,9 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
   private GPGGASentence gpgga;
   private MapProjection proj;
   private GridPartition gridPartition;
-  //private StreetSegment matchedSegment;
+  private StreetSegment matchedSegment;
   private Point2D matchedPoint;
+  private List<StreetSegment> currRoute;
 
   /**
    * Constructor to initialize cartography doucment, cartographer interface and
@@ -127,7 +128,7 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
         gpsPoint);
     
     double minDist = Double.MAX_VALUE;
-    //StreetSegment bestSeg = null;
+    StreetSegment bestSeg = null;
     Point2D bestPoint = null;
     
     for (StreetSegment segment : nearby)
@@ -139,13 +140,19 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
       if (dist < minDist)
       {
         minDist = dist;
-        //bestSeg = segment;
+        bestSeg = segment;
         bestPoint = closest;
       }
     }
     
-    //matchedSegment = bestSeg;
+    matchedSegment = bestSeg;
     matchedPoint = bestPoint;
+//    if (currRoute != null && matchedSegment != null && !currRoute.contains(matchedSegment))
+//    {
+//      System.out.println("Driver gone off-route! Recalculating...");
+//      firePropertyChange("recalculateRoute", null, matchedSegment);
+//    }
+    
     repaint();
   }
   
@@ -183,7 +190,8 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
     return closest;
   }
   
-  private Point2D getClosestSegmentPoint(Point2D p, Point2D a, Point2D b)
+  private Point2D getClosestSegmentPoint(final Point2D p, final Point2D a, 
+      final Point2D b)
   {
     double ax = a.getX();
     double ay= a.getY();
@@ -200,6 +208,11 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
     t = Math.max(0, Math.min(1, t));
     
     return new Point2D.Double(ax + t * dx, ay + t * dy);
+  }
+  
+  public void setCurrentRoute(final List<StreetSegment> route)
+  {
+    this.currRoute = route;
   }
 
 }

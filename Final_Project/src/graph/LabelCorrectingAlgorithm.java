@@ -37,47 +37,42 @@ public class LabelCorrectingAlgorithm extends AbstractShortestPathAlgorithm
       final int destination, final StreetNetwork net)
   {
     Map<String, StreetSegment> result = new HashMap<>();
-    List<String> highlightIDs = new ArrayList<>();
+    //List<String> highlightIDs = new ArrayList<>();
 
-    for (int i = 0; i < net.size(); i++) 
+    int currentID = origin;
+
+    Label candidate;
+    do
     {
-      labels.getLabel(i).setValue(Double.POSITIVE_INFINITY);
-    }
-    labels.getLabel(origin).setValue(0.0);
-
-    if (labels instanceof CandidateLabelList) 
-      ((CandidateLabelList) labels).addCandidate(origin);
-
-    int workingNode = origin;
-
-    while (true) 
-    {
-      Label currLabel = labels.getLabel(workingNode);
-      if (currLabel == null) break;
-
-      Intersection currIntersection = net.getIntersection(workingNode);
-      for (StreetSegment segment : currIntersection.getOutbound()) 
+      // Adjust the labels of the reachable intersections
+      Intersection current = net.getIntersection(currentID);
+      for (StreetSegment segment: current.getOutbound())
       {
-        int outID = segment.getHead();
-        Label outLabel = labels.getLabel(outID);
-
-        double possibleDistance = currLabel.getValue() 
-            + segment.getLength();
-        if (possibleDistance < outLabel.getValue()) 
-        {
-          outLabel.adjustValue(possibleDistance, segment);
-
-          if (labels instanceof CandidateLabelList)
-              ((CandidateLabelList) labels).addCandidate(outID);
-          highlightIDs.add(segment.getID());
-          notifyStreetSegmentObservers(highlightIDs);
-        }
+        labels.adjustHeadValue(segment);
       }
 
-      Label nextLabel = labels.getCandidateLabel();
-      if (nextLabel == null) break;
-      workingNode = nextLabel.getID();
-    }
+//      // Find the best path so far
+//      highlightIDs.clear();
+//      int temp = currentID;
+//      while (temp != origin)
+//      {
+//        StreetSegment segment = labels.getLabel(temp).getInbound();
+//        if (segment != null) 
+//        {
+//          highlightIDs.add(segment.getID());
+//          temp = segment.getTail();
+//        }
+//        else
+//        {
+//          temp = origin;
+//        }
+//      }
+//      // Notify observers about intermediate results
+//      notifyStreetSegmentObservers(highlightIDs);
+
+      candidate = labels.getCandidateLabel();
+      if (candidate != null) currentID = candidate.getID();
+    } while (candidate != null);
 
     int currID = destination;
     while (currID != origin)
@@ -88,7 +83,7 @@ public class LabelCorrectingAlgorithm extends AbstractShortestPathAlgorithm
         result.put(segment.getID(), segment);
         currID = segment.getTail();
       } 
-      else break;
+      else currID = origin;
     }
 
     return result;

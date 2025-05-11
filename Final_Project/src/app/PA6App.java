@@ -3,7 +3,6 @@ package app;
 import geography.*;
 import gui.*;
 import partition.GridPartition;
-import partition.GridPartitionPanel;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,7 +35,8 @@ import graph.StreetNetwork;
  * @author Prof. David Bernstein, James Madison University
  * @version 1.0
  */
-public class PA6App implements ActionListener, Runnable, StreetSegmentObserver, PropertyChangeListener
+public class PA6App implements ActionListener, Runnable, StreetSegmentObserver, 
+    PropertyChangeListener
 {
   private static final int SET_DESTINATION = 0;
   private static final int SET_ORIGIN = 1;
@@ -85,7 +85,8 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver, 
         gridPart.addSegment(segment);
       }
 
-      panel = new DynamicCartographyPanel<StreetSegment>(document, new StreetSegmentCartographer(), proj);
+      panel = new DynamicCartographyPanel<StreetSegment>(document, 
+          new StreetSegmentCartographer(), proj);
       
       panel.setGridPartition(gridPart);
       //GridPartitionPanel gridPanel = new GridPartitionPanel(gridPart);
@@ -158,6 +159,11 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver, 
       frame.setVisible(true);
       gpsReader.execute();
 
+      panel.addPropertyChangeListener("recalculateRoute", evt -> 
+      {
+        StreetSegment newOrigin = (StreetSegment) evt.getNewValue();
+        startRouteRecalculation(newOrigin);
+      });
       frame.setVisible(true);
       Geocoder geocoder = new Geocoder(geographicShapes, document, streets);
       dialog = new GeocodeDialog(frame, geocoder);
@@ -172,9 +178,20 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver, 
           "Error", JOptionPane.ERROR_MESSAGE);
     }
   }
+  
+  private void startRouteRecalculation(final StreetSegment newOrigin)
+  {
+    this.originSegment = newOrigin;
+    if (originSegment != null && destinationSegment != null)
+    {
+      System.out.println("Recalculating route from " + originSegment + "to " + destinationSegment);
+      actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, 
+          "Calculate Route"));
+    }
+  }
 
   @Override
-  public void propertyChange(PropertyChangeEvent evt)
+  public void propertyChange(final PropertyChangeEvent evt)
   {
     if (evt.getPropertyName().equals("progress")) 
     {
@@ -202,7 +219,7 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver, 
   }
 
   @Override
-  public void handleStreetSegments(List<String> segmentIDs)
+  public void handleStreetSegments(final List<String> segmentIDs)
   {
     HashMap<String, StreetSegment> highlighted = new HashMap<String, StreetSegment>();
     for (String id: segmentIDs) 
@@ -230,7 +247,7 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver, 
   }
 
   @Override
-  public void actionPerformed(ActionEvent evt)
+  public void actionPerformed(final ActionEvent evt)
   {
     String ac = evt.getActionCommand();
 
@@ -256,7 +273,8 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver, 
       alg = new LabelSettingAlgorithm(labels);
       
       // TODO CONSTRUCT THE ALGORITHM   --   Use a LabelCorrecting Algorithm
-      //CandidateLabelManager labels = new CandidateLabelList(CandidateLabelList.NEWEST, network.size()); 
+      //CandidateLabelManager labels = 
+      //  new CandidateLabelList(CandidateLabelList.NEWEST, network.size()); 
       //alg = new LabelCorrectingAlgorithm(labels);
 
       // Construct the SwingWorker
@@ -264,7 +282,8 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver, 
           originSegment.getHead(), destinationSegment.getHead(), network, 
           document, panel);
       task.addPropertyChangeListener(this);
-      task.shouldShowIntermediateResults(false); // TODO SET TO true IF YOU WANT TO SEE INTERMEDIATE RESULTS 
+      // TODO SET TO true IF YOU WANT TO SEE INTERMEDIATE RESULTS
+      task.shouldShowIntermediateResults(false);
       dialog.setVisible(false);
 
       // Construct the dialog box
@@ -283,5 +302,4 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver, 
       System.exit(0);
     }
   }
-
 }
