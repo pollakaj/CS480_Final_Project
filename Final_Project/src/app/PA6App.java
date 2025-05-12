@@ -6,6 +6,7 @@ import partition.GridPartition;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
@@ -36,7 +37,7 @@ import graph.StreetNetwork;
  * @version 1.0
  */
 public class PA6App implements ActionListener, Runnable, StreetSegmentObserver, 
-    PropertyChangeListener
+    PropertyChangeListener, RouteRecalculationListener
 {
   private static final int SET_DESTINATION = 0;
   private static final int SET_ORIGIN = 1;
@@ -89,6 +90,7 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
           new StreetSegmentCartographer(), proj);
       
       panel.setGridPartition(gridPart);
+      panel.setRouteRecalculationListener(this);
       //GridPartitionPanel gridPanel = new GridPartitionPanel(gridPart);
       //panel.add(gridPanel);
       
@@ -161,11 +163,15 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
       frame.setVisible(true);
       gpsReader.execute();
 
-//      panel.addPropertyChangeListener("recalculateRoute", evt -> 
-//      {
-//        StreetSegment newOrigin = (StreetSegment) evt.getNewValue();
-//        startRouteRecalculation(newOrigin);
-//      });
+      panel.addPropertyChangeListener("recalculateRoute", evt -> 
+      {
+        StreetSegment newOrigin = (StreetSegment) evt.getNewValue();
+        if (newOrigin != null)
+        {
+          originSegment = newOrigin;
+          routeRecalculated(newOrigin);
+        }
+      });
       frame.setVisible(true);
       Geocoder geocoder = new Geocoder(geographicShapes, document, streets);
       dialog = new GeocodeDialog(frame, geocoder, panel);
@@ -182,16 +188,26 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
     }
   }
   
-//  private void startRouteRecalculation(final StreetSegment newOrigin)
-//  {
-//    this.originSegment = newOrigin;
-//    if (originSegment != null && destinationSegment != null)
-//    {
-//      System.out.println("Recalculating route from " + originSegment + "to " + destinationSegment);
-//      actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, 
-//          CALCULATE));
-//    }
-//  }
+  public void recalculateRoute()
+  {
+    if (originSegment != null && destinationSegment != null)
+    {
+      if (task != null && !task.isDone())
+      {
+        task.cancel(true);
+      }
+
+      panel.clearRoute();
+      panel.repaint();
+      CandidateLabelManager labels = 
+          new CandidateLabelList(CandidateLabelList.NEWEST, network.size());
+      alg = new LabelCorrectingAlgorithm(labels);
+      task = new PathFindingWorker(alg, originSegment.getHead(), 
+          destinationSegment.getHead(), network, document, panel);
+      task.addPropertyChangeListener(this);
+      task.execute();
+    }
+  }
 
   @Override
   public void propertyChange(final PropertyChangeEvent evt)
@@ -207,13 +223,6 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
         try
         {
           Map<String, StreetSegment> path = task.get();
-//          if (originSegment != null && !path.containsValue(originSegment))
-//          {
-//            Map<String, StreetSegment> newPath = new HashMap<>();
-//            newPath.put(originSegment.getID(), originSegment);
-//            newPath.putAll(path);
-//            path = newPath;
-//          }
           document.setHighlighted(path);
           panel.repaint();
           task = null;
@@ -312,5 +321,12 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
       frame.dispose();
       System.exit(0);
     }
+  }
+
+  @Override
+  public void routeRecalculated(StreetSegment newOrigin)
+  {
+    originSegment = newOrigin;
+    recalculateRoute();
   }
 }

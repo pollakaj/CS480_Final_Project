@@ -25,10 +25,7 @@ public class Label
    */
   public Label() 
   {
-    this.permanent = false;
-    this.value = Double.POSITIVE_INFINITY;
-    this.predecessor = null;
-    this.id = 0;
+    this(-1);
   }
   
   /**
@@ -41,7 +38,6 @@ public class Label
     this.id = id;
     this.permanent = false;
     this.value = Double.POSITIVE_INFINITY;
-    this.predecessor = null;
   }
   
   /**
@@ -52,14 +48,18 @@ public class Label
    * @param possiblePredecessor StreetSegment street segment associated with 
    * possible value to update predecessor
    */
-  public void adjustValue(final double possibleValue, 
+  public boolean adjustValue(final double possibleValue, 
       final StreetSegment possiblePredecessor)
   {
-    if (possibleValue < value)
+    boolean result = false;
+    if (possibleValue < value) 
     {
-      this.value = possibleValue;
-      this.predecessor = possiblePredecessor;
+      value = possibleValue;
+      predecessor = possiblePredecessor;
+      result = true;
     }
+    
+    return result;
   }
   
   /**

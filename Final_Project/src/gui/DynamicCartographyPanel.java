@@ -8,8 +8,12 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 
 import feature.StreetSegment;
@@ -42,6 +46,8 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
   private StreetSegment matchedSegment;
   private Point2D matchedPoint;
   private List<StreetSegment> currRoute;
+  private RouteRecalculationListener listener;
+  private BufferedImage gpsImage;
 
   /**
    * Constructor to initialize cartography doucment, cartographer interface and
@@ -56,6 +62,15 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
   {
     super(model, cartographer);
     this.proj = proj;
+    File imageFile = new File("bernstein.jpg");
+    try
+    {
+      gpsImage = ImageIO.read(imageFile);
+    }
+    catch (IOException e)
+    {
+      e.printStackTrace();
+    }
   }
   
   /**
@@ -105,8 +120,17 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
             matchedPoint.getY()};
         
         at.transform(matchSource, 0, matchCords, 0, 1);
-        g2.setColor(Color.BLUE);
-        g2.fillOval((int) matchCords[0] - 4, (int) matchCords[1] - 4, 8, 8);
+        
+        if (gpsImage != null)
+        {
+          int base = 10;
+          int imgWidth = base;
+          int imgHeight = base;
+          g2.drawImage(gpsImage, (int) matchCords[0] - imgWidth / 2, 
+              (int) matchCords[1] - imgHeight / 2, imgWidth, imgHeight, null);
+        }
+        //g2.setColor(Color.BLUE);
+        //g2.fillOval((int) matchCords[0] - 4, (int) matchCords[1] - 4, 8, 8);
       }
     }
   }
@@ -154,8 +178,7 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
     if (currRoute != null && !onRoute(matchedPoint, currRoute))
     {
       System.out.println("You are off route");
-      JOptionPane.showMessageDialog(this, "You are off route!", 
-          "Off Route Alert", JOptionPane.WARNING_MESSAGE);
+      if (listener != null) listener.routeRecalculated(matchedSegment);
     }
 
     repaint();
@@ -247,5 +270,15 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
   public Point2D getMatchedPoint()
   {
     return matchedPoint;
+  }
+  
+  public void setRouteRecalculationListener(RouteRecalculationListener routeRecalcListener)
+  {
+    this.listener = routeRecalcListener;
+  }
+  
+  public void clearRoute() 
+  {
+    this.currRoute = null;
   }
 }

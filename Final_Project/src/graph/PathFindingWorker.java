@@ -97,5 +97,4 @@ public class PathFindingWorker extends SwingWorker<Map<String, StreetSegment>, S
     else alg.removeStreetSegmentObserver(this);
 
   }
-
 }

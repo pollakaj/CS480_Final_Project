@@ -1,43 +1,45 @@
 package graph;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import feature.Intersection;
-import feature.StreetSegment;
+import feature.*;
+import java.util.*;
 
 /**
- * Associate a label with each node that represents the length of the shortest
- *  path to that node that has been found so far.
- *  
- *  @author Adam Pollak
- *  @version 1.0
- *  
- *  Honor Code: This code complies with the JMU Honor Code.
+ * A label-calculating algorithm for calculating shortest paths.
+ * 
+ * @author Prof. David Bernstein, James Madison University
+ * @version 1.0
  */
-public class LabelCorrectingAlgorithm extends AbstractShortestPathAlgorithm
+public class LabelCorrectingAlgorithm extends AbstractShortestPathAlgorithm 
 {
   private CandidateLabelManager labels;
-  
+
   /**
-   * Constructor for the correcitng algorithm.
-   *
-   * @param labels Collection of labels managed for correcting algorithm
+   * Explicit Value Constructor.
+   * 
+   * @param labels The LabelManager to use
    */
   public LabelCorrectingAlgorithm(final CandidateLabelManager labels)
   {
     super();
     this.labels = labels;
   }
-  
+
+  /**
+   * Find the shortest path from the given origin Intersection to the given 
+   * destination Intersection on the given StreetNetwork.
+   * 
+   * @param origin
+   * @param destination
+   * @param net
+   * @return The path
+   */
   @Override
-  public Map<String, StreetSegment> findPath(final int origin, 
-      final int destination, final StreetNetwork net)
+  public Map<String, StreetSegment> findPath(final int origin, final int destination, 
+      final StreetNetwork net)
   {
-    Map<String, StreetSegment> result = new HashMap<>();
-    //List<String> highlightIDs = new ArrayList<>();
+    // List<String> highlightIDs = new ArrayList<String>();
+    Map<String, StreetSegment> result = new HashMap<String, StreetSegment>();
+    labels.getLabel(origin).setValue(0.0);
 
     int currentID = origin;
 
@@ -74,17 +76,22 @@ public class LabelCorrectingAlgorithm extends AbstractShortestPathAlgorithm
       if (candidate != null) currentID = candidate.getID();
     } while (candidate != null);
 
-    int currID = destination;
-    while (currID != origin)
+
+    currentID = destination;
+    while (currentID != origin)
     {
-      StreetSegment segment = labels.getLabel(currID).getPredecessor();
-      if (segment != null) 
+      StreetSegment segment = labels.getLabel(currentID).getPredecessor();
+      if (segment != null)
       {
         result.put(segment.getID(), segment);
-        currID = segment.getTail();
-      } 
-      else currID = origin;
+        currentID = segment.getTail();
+      }
+      else
+      {
+        currentID = origin;
+      }
     }
+
 
     return result;
   }
