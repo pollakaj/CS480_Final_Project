@@ -70,6 +70,7 @@ public class GeocodeDialog extends JDialog implements ActionListener,
     geocodeButton = new JButton(GEOCODE);
     currLocationButton = new JButton("Current Location");
     
+    // Button functionality to start the location at the gps location.
     currLocationButton.addActionListener(evt -> {
       StreetSegment currSegment = panel.getMatchedSegment();
       if (currSegment != null)

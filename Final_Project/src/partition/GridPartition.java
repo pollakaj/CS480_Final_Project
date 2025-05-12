@@ -13,9 +13,18 @@ import java.util.Set;
 import feature.StreetSegment;
 import geography.GeographicShape;
 
+/**
+ * Spatial Partitioning using grid.
+ * 
+ * @author Adam Pollak & Tyler Lopes
+ * @version 1.0
+ * 
+ * Honor Code: This code complies with the JMU Honor Code.
+ */
 public class GridPartition implements SpatialPartition
 {
   private double cellSize;
+  // Store grid cells
   private Map<String, List<StreetSegment>> grid;
   
   public GridPartition(final double cellSize)
@@ -24,10 +33,12 @@ public class GridPartition implements SpatialPartition
     this.grid = new HashMap<>();
   }
   
+  // Generates key for a grid cell given coordinates
   private String keyGeneration(final double x, final double y)
   {
     int cellX = (int) Math.floor(x / cellSize);
     int cellY = (int) Math.floor(y / cellSize);
+    // Comma gets messed up use underscore
     return cellX + "_" + cellY;
   }
   
@@ -41,6 +52,7 @@ public class GridPartition implements SpatialPartition
     return grid;
   }
 
+  // Adds a segment to whichever grid cells it intersects
   @Override
   public void addSegment(final StreetSegment segment)
   {
@@ -51,6 +63,7 @@ public class GridPartition implements SpatialPartition
     double[] cords = new double[6];
     PathIterator it = shape.getPathIterator(null);
     
+    // Create bounding box
     double minX = Double.POSITIVE_INFINITY;
     double minY = Double.POSITIVE_INFINITY;
     double maxX = Double.NEGATIVE_INFINITY;
@@ -71,6 +84,7 @@ public class GridPartition implements SpatialPartition
       it.next();
     }
     
+    // Adds the segment to each intersecting cell.
     for (double x = minX; x <= maxX; x += cellSize)
     {
       for (double y = minY; y <= maxY; y += cellSize)
@@ -81,6 +95,7 @@ public class GridPartition implements SpatialPartition
     }
   }
 
+  // Gets all segments within a given radius around a given point
   @Override
   public List<StreetSegment> getNearbySegments(final double radius, 
       final Point2D local)
@@ -91,6 +106,7 @@ public class GridPartition implements SpatialPartition
     double maxX = local.getX() + radius;
     double maxY = local.getY() + radius;
     
+    // Loops through each grid cell in the square radius
     for (double x = minX; x <= maxX; x += cellSize)
     {
       for (double y = minY; y <= maxY; y += cellSize)

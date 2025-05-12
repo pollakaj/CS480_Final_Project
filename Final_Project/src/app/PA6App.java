@@ -6,7 +6,6 @@ import partition.GridPartition;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
@@ -79,6 +78,7 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
       document = sReader.read(streets);
       System.out.println("Read the .str file");
       
+      // Set up grid
       double cellSize = 100.0;
       GridPartition gridPart = new GridPartition(cellSize);
       for (StreetSegment segment : document)
@@ -90,9 +90,8 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
           new StreetSegmentCartographer(), proj);
       
       panel.setGridPartition(gridPart);
+      // Initialize Listener
       panel.setRouteRecalculationListener(this);
-      //GridPartitionPanel gridPanel = new GridPartitionPanel(gridPart);
-      //panel.add(gridPanel);
       
       frame = new JFrame("Map");
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -163,6 +162,7 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
       frame.setVisible(true);
       gpsReader.execute();
 
+      // Set up property change listener to trigger route recalculation
       panel.addPropertyChangeListener("recalculateRoute", evt -> 
       {
         StreetSegment newOrigin = (StreetSegment) evt.getNewValue();
@@ -188,6 +188,8 @@ public class PA6App implements ActionListener, Runnable, StreetSegmentObserver,
     }
   }
   
+  // Uses a path finding worker and label correcting algorithm to recalculate 
+  // the route with the new starting point.
   public void recalculateRoute()
   {
     if (originSegment != null && destinationSegment != null)

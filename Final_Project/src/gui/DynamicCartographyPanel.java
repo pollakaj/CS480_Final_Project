@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.List;
 
 import javax.imageio.ImageIO;
-import javax.swing.JOptionPane;
 
 import feature.StreetSegment;
 import geography.GeographicShape;
@@ -113,6 +112,7 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
       g2.setColor(Color.RED);
       g2.fillOval((int) displayCoords[0] - 4, (int) displayCoords[1] - 4, 8, 8);
       
+      // Used for displaying the map matching result
       if (matchedPoint != null)
       {
         double[] matchCords = new double[2];
@@ -121,6 +121,7 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
         
         at.transform(matchSource, 0, matchCords, 0, 1);
         
+        // GPS image scaling for face.
         if (gpsImage != null)
         {
           int base = 10;
@@ -150,6 +151,7 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
     double[] projection = proj.forward(new double[] {lon, lat});
     Point2D.Double gpsPoint = new Point2D.Double(projection[0], projection[1]);
     
+    // Searches segments around gps point in the grid partition.
     double searchRadius = 200.0;
     List<StreetSegment> nearby = gridPartition.getNearbySegments(searchRadius, 
         gpsPoint);
@@ -158,6 +160,7 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
     StreetSegment bestSeg = null;
     Point2D bestPoint = null;
     
+    // Iterate through segments and calculate closest, then update best point/segment.
     for (StreetSegment segment : nearby)
     {
       GeographicShape shape = segment.getGeographicShape();
@@ -175,15 +178,18 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
     matchedSegment = bestSeg;
     matchedPoint = bestPoint;
     
+    // Check for if user goes off route
     if (currRoute != null && !onRoute(matchedPoint, currRoute))
     {
       System.out.println("You are off route");
+      // Invokes the listener for app
       if (listener != null) listener.routeRecalculated(matchedSegment);
     }
 
     repaint();
   }
   
+  // Boolean for determining if the user is off the route, uses 20 meter threshold
   private boolean onRoute(final Point2D matched, 
       final List<StreetSegment> route)
   {
@@ -198,11 +204,13 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
     return false;
   }
   
+  // Finds the closest point to the target in the given shape
   private Point2D getClosestPoint(final Point2D target, 
       final GeographicShape shape)
   {
     double minDist = Double.MAX_VALUE;
     Point2D closest = null;
+    // Coords plus seg types
     double[] cords = new double[6];
     
     PathIterator it = shape.getShape().getPathIterator(null);
@@ -232,6 +240,7 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
     return closest;
   }
   
+  // Gets the closest Point on line a-b given p
   private Point2D getClosestSegmentPoint(final Point2D p, final Point2D a, 
       final Point2D b)
   {
@@ -246,10 +255,11 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
     
     if (dx == 0 && dy == 0) return new Point2D.Double(ax, ay);
     
-    double t = ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy);
-    t = Math.max(0, Math.min(1, t));
-    
-    return new Point2D.Double(ax + t * dx, ay + t * dy);
+    // Scalar projection factor from a-p onto a-b
+    double proj = ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy);
+    proj = Math.max(0, Math.min(1, proj));
+    // Computes the point
+    return new Point2D.Double(ax + proj * dx, ay + proj * dy);
   }
   
   public void setCurrentRoute(final List<StreetSegment> route)
@@ -272,7 +282,7 @@ public class DynamicCartographyPanel<T> extends CartographyPanel<T> implements G
     return matchedPoint;
   }
   
-  public void setRouteRecalculationListener(RouteRecalculationListener routeRecalcListener)
+  public void setRouteRecalculationListener(final RouteRecalculationListener routeRecalcListener)
   {
     this.listener = routeRecalcListener;
   }
